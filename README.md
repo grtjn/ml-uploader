@@ -32,8 +32,15 @@ app.js
 ``` 
 html 
 ```html
-<ml-upload multiple="true" ml-collection="my-collection" upload-file-list="ctrl.fileList">
-  <p><strong>Drop files here or click to select files.</strong></p>
-  <em>(Files will be uploaded automatically)</em>
-</ml-upload>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    Upload files
+  </div>
+  <div class="panel-body">
+    <ml-upload multiple="true" ml-collection="my-collection" upload-file-list="ctrl.fileList">
+      <p><strong>Drop files here or click to select files.</strong></p>
+      <em>(Files will be uploaded automatically)</em>
+    </ml-upload>
+  </div>
+</div>
 ```

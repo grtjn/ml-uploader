@@ -28,12 +28,14 @@ gulp.task('jshint', function() {
 gulp.task('scripts', ['test'], function() {
   return gulp.src([
       './src/ml-uploader.js',
+      './src/**/*.service.js',
+      './src/**/*.directive.js',
       './src/**/*.js'
     ])
     .pipe(concat('ml-uploader.js'))
     .pipe(gulp.dest('dist'))
     .pipe(rename('ml-uploader.min.js'))
-    .pipe(uglify())
+    .pipe(uglify({mangle: false}))
     .pipe(gulp.dest('dist'));
 });
 

@@ -9,6 +9,7 @@
   ],
   "description": "AngularJS library for uploading files into MarkLogic",
   "main": [
+    "dist/ml-uploader.css",
     "dist/ml-uploader.min.js"
   ],
   "dependencies": {

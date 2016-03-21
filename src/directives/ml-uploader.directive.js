@@ -2,6 +2,8 @@
 
   'use strict';
 
+  MLUploadDirective.$injector = ['mlUploadService'];
+
   /**
    * angular element directive; an uploader for loading documents into MarkLogic.
    *
@@ -27,7 +29,6 @@
       return window.File && window.FileList && window.FileReader;
     }
 
-    MLUploadDirective.$injector = ['mlUploadService'];
     function MLUploadDirective(mlUploadService) {
       return {
         restrict: 'E',

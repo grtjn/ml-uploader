@@ -5,8 +5,90 @@
 
 }());
 (function() {
+  'use strict';
+
+  angular.module('ml.uploader')
+    .factory('mlUploadService', MLUploadService);
+  MLUploadService.$inject = ['$rootScope', 'MLRest', '$http'];
+
+  function MLUploadService($rootScope, mlRest, $http) {
+    var service = {};
+
+    // copied from $http, prevents $digest loops
+    function applyUpdate() {
+      if (!$rootScope.$$phase) {
+        $rootScope.$apply();
+      }
+    }
+
+    // base object
+    var Progress = {};
+
+    Progress.value = 0;
+    Progress.done = false;
+    Progress.name = 'unkown';
+    Progress.failed = false;
+
+    Progress.update = function(val) {
+      this.updated = Date.now();
+      console.log('update progress', this);
+      if (val) {
+        this.value = val;
+        this.done = val === 100;
+      }
+      applyUpdate(this);
+    };
+
+    Progress.error = function(code) {
+      console.log('setting error', code);
+      this.failed = true;
+      this.errorStatus = code;
+      applyUpdate(this);
+    };
+
+
+    service.sendFile = function(data, opts) {
+      var progress = Object.create(Progress);
+      var format = 'binary';
+      progress.name = data.name;
+      console.log('sending file');
+
+      if (/text/.test(data.type)) {
+        format = 'text';
+      } else if (/xml/.test(data.type)) {
+        format = 'xml';
+      } else if (/json/.test(data.type)) {
+        format = 'json';
+      }
+
+      mlRest.updateDocument(
+        data, 
+        angular.extend(
+          {
+            uri: data.name,
+            format: format
+          },
+          opts
+        )
+      ).then(function(response) {
+          console.log('added document to grade');
+          progress.done = true;
+          progress.update(100);
+        });
+
+
+      return progress;
+    };
+
+    return service;
+  }
+})();
+
+(function() {
 
   'use strict';
+
+  MLUploadDirective.$injector = ['mlUploadService'];
 
   /**
    * angular element directive; an uploader for loading documents into MarkLogic.
@@ -33,7 +115,6 @@
       return window.File && window.FileList && window.FileReader;
     }
 
-    MLUploadDirective.$injector = ['mlUploadService'];
     function MLUploadDirective(mlUploadService) {
       return {
         restrict: 'E',
@@ -118,84 +199,4 @@
         template: '<div class="ml-upload"><div class="ml-dropzone"><div class="notes" ng-transclude ng-hide="files.length"></div><ul class="ml-upload-file-list list-unstyled" ng-show="files.length"><li ng-repeat="f in files" class="ml-upload-file" ng-attr-file-extension="{{f.ext}}" ng-class="{ \'ml-upload-done\': f.done, \'ml-upload-error\': f.failed }" ng-attr-title="{{f.errorStatus || f.name}}"><span class="ml-upload-file-name">{{ f.name }}</span><span class="ml-upload-file-progress"><span class="ml-upload-progress-value">{{ f.value }}%</span><span class="ml-upload-progress-bar" ng-style="{ width: f.value + \'%\' }">&nbsp;</span></span></li></ul></div></div>'
       };
     }
-})();
-
-(function() {
-  'use strict';
-
-  angular.module('ml.uploader')
-    .factory('mlUploadService', MLUploadService);
-  MLUploadService.$inject = ['$rootScope', 'MLRest', '$http'];
-
-  function MLUploadService($rootScope, mlRest, $http) {
-    var service = {};
-
-    // copied from $http, prevents $digest loops
-    function applyUpdate() {
-      if (!$rootScope.$$phase) {
-        $rootScope.$apply();
-      }
-    }
-
-    // base object
-    var Progress = {};
-
-    Progress.value = 0;
-    Progress.done = false;
-    Progress.name = 'unkown';
-    Progress.failed = false;
-
-    Progress.update = function(val) {
-      this.updated = Date.now();
-      console.log('update progress', this);
-      if (val) {
-        this.value = val;
-        this.done = val === 100;
-      }
-      applyUpdate(this);
-    };
-
-    Progress.error = function(code) {
-      console.log('setting error', code);
-      this.failed = true;
-      this.errorStatus = code;
-      applyUpdate(this);
-    };
-
-
-    service.sendFile = function(data, opts) {
-      var progress = Object.create(Progress);
-      var format = 'binary';
-      progress.name = data.name;
-      console.log('sending file');
-
-      if (/text/.test(data.type)) {
-        format = 'text';
-      } else if (/xml/.test(data.type)) {
-        format = 'xml';
-      } else if (/json/.test(data.type)) {
-        format = 'json';
-      }
-
-      mlRest.updateDocument(
-        data, 
-        angular.extend(
-          {
-            uri: data.name,
-            format: format
-          },
-          opts
-        )
-      ).then(function(response) {
-          console.log('added document to grade');
-          progress.done = true;
-          progress.update(100);
-        });
-
-
-      return progress;
-    };
-
-    return service;
-  }
 })();
