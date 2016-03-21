@@ -1,6 +1,6 @@
 {
   "name": "ml-uploader",
-  "version": "0.0.8",
+  "version": "0.0.1",
   "description": "AngularJS library for uploading documents into MarkLogic",
   "devDependencies": {
     "gulp": "^3.9.0",
@@ -31,17 +31,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ryanjdew/ml-highcharts-ng.git"
+    "url": "https://github.com/ryanjdew/ml-uploader.git"
   },
   "keywords": [
     "AngularJS",
     "MarkLogic",
-    "Highcharts"
+    "Uploader"
   ],
   "author": "Ryan Dew <ryan.j.dew@gmail.com>",
   "license": "Apache License 2.0",
   "bugs": {
-    "url": "https://github.com/ryanjdew/ml-highcharts-ng/issues"
+    "url": "https://github.com/ryanjdew/ml-uploader/issues"
   },
-  "homepage": "https://github.com/ryanjdew/ml-highcharts-ng"
+  "homepage": "https://github.com/ryanjdew/ml-uploader"
 }
