@@ -10,8 +10,9 @@
    * attributes:
    *
    * - `multiple`: Specify if it should allow multiple files
-   * - `collection`: optional. Collection that the uploaded file should be assigned to.
+   * - `ml-collection`: optional. Collection that the uploaded file should be assigned to.
    * - `fileList`: optional. A function reference to callback when a chart item is selected
+   * - `ml-transform`: optional. A varible witha transform name.
    *
    * Example:
    *
@@ -37,7 +38,8 @@
         scope: {
           multiple: '@',
           collection: '@mlCollection',
-          fileList: '=uploadFileList'
+          fileList: '=uploadFileList',
+          transform: '=mlTransform'
         },
         link: function(scope, ele, attr, transclude) {
           scope.files = scope.fileList || [];
@@ -84,7 +86,8 @@
             var progress = mlUploadService.sendFile(f, {
               uri: f.name.replace(/ /g,''),
               category: 'content',
-              collection: scope.collection
+              collection: scope.collection,
+              transform: scope.transform
             });
             progress.ext = ext;
             scope.files.push(progress);

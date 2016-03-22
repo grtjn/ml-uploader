@@ -123,7 +123,8 @@
         scope: {
           multiple: '@',
           collection: '@mlCollection',
-          fileList: '=uploadFileList'
+          fileList: '=uploadFileList',
+          transform: '=mlTransform'
         },
         link: function(scope, ele, attr, transclude) {
           scope.files = scope.fileList || [];
@@ -170,7 +171,8 @@
             var progress = mlUploadService.sendFile(f, {
               uri: f.name.replace(/ /g,''),
               category: 'content',
-              collection: scope.collection
+              collection: scope.collection,
+              transform: scope.transform
             });
             progress.ext = ext;
             scope.files.push(progress);
