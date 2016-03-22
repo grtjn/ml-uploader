@@ -12,12 +12,13 @@
    * - `multiple`: Specify if it should allow multiple files
    * - `ml-collection`: optional. Collection that the uploaded file should be assigned to.
    * - `fileList`: optional. A function reference to callback when a chart item is selected
-   * - `ml-transform`: optional. A varible witha transform name.
+   * - `ml-transform`: optional. A variable with a transform name.
+   * - `upload-options`: optional. A variable with options to pass to /v1/documents
    *
    * Example:
    *
    * ```
-   * <ml-upload multiple="true" ml-collection="my-collection" upload-file-list="ctrl.files">
+   * <ml-upload multiple="true" ml-collection="my-collection" upload-options="ctrl.uploadOptions" upload-file-list="ctrl.files">
    *   <p><strong>Drop files here or click to select files.</strong></p>
    *   <em>(Files will be uploaded automatically)</em>
    * </ml-upload>```
@@ -39,10 +40,12 @@
           multiple: '@',
           collection: '@mlCollection',
           fileList: '=uploadFileList',
-          transform: '=mlTransform'
+          transform: '=mlTransform',
+          uploadOptions: '=uploadOptions'
         },
         link: function(scope, ele, attr, transclude) {
           scope.files = scope.fileList || [];
+          scope.uploadOptions = scope.uploadOptions || {};
 
           if (!isSupported()) {
             throw 'ml-uloader - HTML5 file upload not supported by this browser';
@@ -83,12 +86,19 @@
           function processFile(f) {
             console.log('processing file', f);
             var ext = f.name.substr(f.name.lastIndexOf('.')+1);
-            var progress = mlUploadService.sendFile(f, {
-              uri: f.name.replace(/ /g,''),
-              category: 'content',
-              collection: scope.collection,
-              transform: scope.transform
-            });
+            var docOptions = angular.extend(
+              scope.uploadOptions,
+              {
+                uri: f.name.replace(/ /g,''),
+                category: 'content'
+              });
+            if (scope.transform) {
+              docOptions.transform = scope.transform;
+            }
+            if (scope.collection) {
+              docOptions.collection = scope.collection;
+            }
+            var progress = mlUploadService.sendFile(f, docOptions);
             progress.ext = ext;
             scope.files.push(progress);
           }

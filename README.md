@@ -27,6 +27,9 @@ app.js
   function UploaderCtrl($scope, $location) {
     var ctrl = this;
     ctrl.fileList = [];
+    ctrl.uploadOptions = {
+      'trans:tags': ['tag1', 'tag2']
+    };
   }
 })();
 ``` 
@@ -37,7 +40,9 @@ html
     Upload files
   </div>
   <div class="panel-body">
-    <ml-upload multiple="true" ml-collection="my-collection" ml-transform="'filter-doc'" upload-file-list="ctrl.fileList">
+    <ml-upload multiple="true" ml-collection="my-collection" ml-transform="'filter-doc'" 
+    upload-options="ctrl.uploadOptions"
+    upload-file-list="ctrl.fileList">
       <p><strong>Drop files here or click to select files.</strong></p>
       <em>(Files will be uploaded automatically)</em>
     </ml-upload>
