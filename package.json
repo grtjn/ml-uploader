@@ -1,6 +1,6 @@
 {
   "name": "ml-uploader",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "AngularJS library for uploading documents into MarkLogic",
   "devDependencies": {
     "gulp": "^3.9.0",
