@@ -33,8 +33,6 @@ module.exports = function(config) {
       'bower_components/lodash/lodash.js', // v3.x
       'bower_components/ml-common-ng/dist/ml-common-ng.js',
 
-      'dist/ml-highcharts-ng-tpls.min.js',
-
       // App under test
       'src/ml-uploader.js',
       'src/ml-uploader.service.js',

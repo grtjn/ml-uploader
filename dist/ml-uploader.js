@@ -61,15 +61,26 @@
         format = 'json';
       }
 
+      var uri = data.name;
+      if (opts && opts.uriPrefix) {
+        if (angular.isFunction(opts.uriPrefix)) {
+          uri = opts.uriPrefix(data) + uri;
+        } else {
+          uri = opts.uriPrefix + uri;
+        }
+      }
+      var params = angular.extend(
+          opts,
+          {
+            uri: uri,
+            format: format
+          }
+        );
+      delete params.uriPrefix;
+
       mlRest.updateDocument(
         data, 
-        angular.extend(
-          {
-            uri: data.name,
-            format: format
-          },
-          opts
-        )
+        params
       ).then(function(response) {
           console.log('added document to grade');
           progress.done = true;
@@ -173,11 +184,12 @@
             console.log('processing file', f);
             var ext = f.name.substr(f.name.lastIndexOf('.')+1);
             var docOptions = angular.extend(
-              scope.uploadOptions,
-              {
-                uri: f.name.replace(/ /g,''),
-                category: 'content'
-              });
+                {
+                  uri: f.name.replace(/ /g,''),
+                  category: 'content'
+                },
+                scope.uploadOptions
+              );
             if (scope.transform) {
               docOptions.transform = scope.transform;
             }

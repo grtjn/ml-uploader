@@ -87,11 +87,12 @@
             console.log('processing file', f);
             var ext = f.name.substr(f.name.lastIndexOf('.')+1);
             var docOptions = angular.extend(
-              scope.uploadOptions,
-              {
-                uri: f.name.replace(/ /g,''),
-                category: 'content'
-              });
+                {
+                  uri: f.name.replace(/ /g,''),
+                  category: 'content'
+                },
+                scope.uploadOptions
+              );
             if (scope.transform) {
               docOptions.transform = scope.transform;
             }
