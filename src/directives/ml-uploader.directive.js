@@ -55,7 +55,13 @@
 
           ele = angular.element(ele);
 
-          ele.append('<div style="width:0;height:0;overflow:hidden"><input type="file" name="_hidden_uploader_file" ' + (scope.multiple ? 'multiple' : '' ) +'></div>');
+          ele
+            .append(
+              '<div style="width:0;height:0;overflow:hidden">' +
+              '<input type="file" name="_hidden_uploader_file" ' +
+               (scope.multiple ? 'multiple' : '' ) + 
+               '></div>'
+            );
           var fileInp = ele.find('input[type="file"]');
           var dropzone = ele.find('.ml-dropzone');
 
@@ -124,7 +130,22 @@
           });
 
         },
-        template: '<div class="ml-upload"><div class="ml-dropzone"><div class="notes" ng-transclude ng-hide="files.length"></div><ul class="ml-upload-file-list list-unstyled" ng-show="files.length"><li ng-repeat="f in files" class="ml-upload-file" ng-attr-file-extension="{{f.ext}}" ng-class="{ \'ml-upload-done\': f.done, \'ml-upload-error\': f.failed }" ng-attr-title="{{f.errorStatus || f.name}}"><span class="ml-upload-file-name">{{ f.name }}</span><span class="ml-upload-file-progress"><span class="ml-upload-progress-value">{{ f.value }}%</span><span class="ml-upload-progress-bar" ng-style="{ width: f.value + \'%\' }">&nbsp;</span></span></li></ul></div></div>'
+        template:
+          '<div class="ml-upload">' +
+          '<div class="ml-dropzone">' +
+          '<div class="notes" ng-transclude ng-hide="files.length">' +
+          '</div>' +
+          '<ul class="ml-upload-file-list list-unstyled" ng-show="files.length">' +
+          '<li ng-repeat="f in files" class="ml-upload-file" ' +
+          ' ng-attr-file-extension="{{f.ext}}" ' +
+          ' ng-class="{ \'ml-upload-done\': f.done, \'ml-upload-error\': f.failed }" ' +
+          ' ng-attr-title="{{f.errorStatus || f.name}}">' +
+          '<span class="ml-upload-file-name">{{ f.name }}</span>' +
+          '<span class="ml-upload-file-progress">' +
+          '<span class="ml-upload-progress-value">{{ f.value }}%</span>' +
+          '<span class="ml-upload-progress-bar" ' +
+          ' ng-style="{ width: f.value + \'%\' }">&nbsp;</span>' +
+          '</span></li></ul></div></div>'
       };
     }
 })();

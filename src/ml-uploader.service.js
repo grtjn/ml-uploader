@@ -72,13 +72,24 @@
         );
       delete params.uriPrefix;
 
-      mlRest.updateDocument(
-        data, 
-        params
+      mlRest.request(
+        '/documents',
+        {
+          data: data, 
+          params: params,
+          method: 'PUT',
+          headers: {
+            'Content-Type': data.type
+          }
+        }
       ).then(function(response) {
           console.log('added document to grade');
           progress.done = true;
           progress.update(100);
+        },
+        angular.noop,
+        function() {
+          console.log(arguments);
         });
 
 
