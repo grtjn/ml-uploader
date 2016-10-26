@@ -96,6 +96,49 @@
       return progress;
     };
 
+    service.dzHighlight = function(e, dropzone) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (e.type === 'dragenter' || e.type === 'dragover') {
+        dropzone.addClass('hover');
+      } else {
+        dropzone.removeClass('hover');
+      }
+    };
+
+    service.dropFiles = function(e, dropzone, scope) {
+      e.preventDefault();
+      e.stopPropagation();
+      e = e.originalEvent;
+      var files = e.target.files || e.dataTransfer.files, i = files.length;
+      service.dzHighlight(e, dropzone);
+      while(i--) {
+        processFile(files[i], scope);
+      }
+      scope.$apply();
+    };
+
+    function processFile(f, scope) {
+      console.log('processing file', f);
+      var ext = f.name.substr(f.name.lastIndexOf('.')+1);
+      var docOptions = angular.extend(
+          {
+            uri: f.name.replace(/\s+/g, '_'),
+            category: 'content'
+          },
+          scope.uploadOptions
+        );
+      if (scope.transform) {
+        docOptions.transform = scope.transform;
+      }
+      if (scope.collection) {
+        docOptions.collection = scope.collection;
+      }
+      var progress = service.sendFile(f, docOptions);
+      progress.ext = ext;
+      scope.files.push(progress);
+    }
+
     return service;
   }
 })();

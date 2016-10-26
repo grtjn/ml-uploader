@@ -65,51 +65,6 @@
           var fileInp = ele.find('input[type="file"]');
           var dropzone = ele.find('.ml-dropzone');
 
-          function dzHighlight(e) {
-            // console.log('dzHighlight', e);
-            e.stopPropagation();
-            e.preventDefault();
-            if (e.type === 'dragenter' || e.type === 'dragover') {
-              dropzone.addClass('hover');
-            } else {
-              dropzone.removeClass('hover');
-            }
-          }
-
-          function dropFiles(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('drop files', e);
-            e = e.originalEvent;
-            var files = e.target.files || e.dataTransfer.files, i = files.length;
-            dzHighlight(e);
-            while(i--) {
-              processFile(files[i]);
-            }
-            scope.$apply();
-          }
-
-          function processFile(f) {
-            console.log('processing file', f);
-            var ext = f.name.substr(f.name.lastIndexOf('.')+1);
-            var docOptions = angular.extend(
-                {
-                  uri: f.name.replace(/ /g,''),
-                  category: 'content'
-                },
-                scope.uploadOptions
-              );
-            if (scope.transform) {
-              docOptions.transform = scope.transform;
-            }
-            if (scope.collection) {
-              docOptions.collection = scope.collection;
-            }
-            var progress = mlUploadService.sendFile(f, docOptions);
-            progress.ext = ext;
-            scope.files.push(progress);
-          }
-
           // clicking the dropzone is like clicking the file input
           dropzone
             .on('click', function(evt) {
@@ -117,10 +72,17 @@
               fileInp.click();
               evt.stopPropagation();
             })
-            .on('drop', dropFiles)
-            .on('dragenter dragleave dragover',dzHighlight);
+            .on('drop', function(e) {
+              return mlUploadService.dropFiles(e, dropzone, scope);
+            })
+            .on('dragenter dragleave dragover',
+              function(e) {
+                return mlUploadService.dzHighlight(e, dropzone);
+              });
 
-          fileInp.on('change', dropFiles);
+          fileInp.on('change', function(e) {
+            return mlUploadService.dropFiles(e, dropzone, scope);
+          });
 
           // prevent it from navigating away from page if an accidental drop
           jQuery('html').on('drop', function(e) {
