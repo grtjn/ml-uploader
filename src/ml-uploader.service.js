@@ -3,6 +3,7 @@
 
   angular.module('ml.uploader')
     .factory('mlUploadService', MLUploadService);
+
   MLUploadService.$inject = ['$rootScope', 'MLRest', '$http'];
 
   function MLUploadService($rootScope, mlRest, $http) {
@@ -41,7 +42,7 @@
     };
 
 
-    service.sendFile = function(data, opts) {
+    service.sendFile = function(data, opts, onSend, onSendDone, onSendFail) {
       var progress = Object.create(Progress);
       var format = 'binary';
       progress.name = data.name;
@@ -55,7 +56,9 @@
         format = 'json';
       }
 
-      var uri = data.name;
+      // Suppress any invalid char from the uri, by replacing it with _,
+      // makes lives easier than using percent encoding..
+      var uri = data.name.replace(/[^!*'();:@&=+$,/?#\[\]A-Za-z0-9\-_.~%]/g, '_');
       if (opts && opts.uriPrefix) {
         if (angular.isFunction(opts.uriPrefix)) {
           uri = opts.uriPrefix(data) + uri;
@@ -64,18 +67,21 @@
         }
       }
       var params = angular.extend(
-          opts,
-          {
-            uri: uri,
-            format: format
-          }
-        );
+        opts,
+        {
+          uri: uri,
+          format: format
+        }
+      );
       delete params.uriPrefix;
 
+      if (onSend) {
+        onSend(progress);
+      }
       mlRest.request(
         '/documents',
         {
-          data: data, 
+          data: data,
           params: params,
           method: 'PUT',
           headers: {
@@ -84,14 +90,21 @@
         }
       ).then(function(response) {
           console.log('added document to grade');
+          if (onSendDone) {
+            onSendDone(progress);
+          }
           progress.done = true;
           progress.update(100);
-        },
-        angular.noop,
-        function() {
-          console.log(arguments);
+        },function(reason) {
+          console.log('send document failed:' + reason);
+          progress.failed = true;
+          if (onSendFail) {
+            onSendFail(progress);
+          }
         });
 
+      progress.uri = uri;
+      progress.type = data.type;
 
       return progress;
     };
@@ -122,19 +135,18 @@
       console.log('processing file', f);
       var ext = f.name.substr(f.name.lastIndexOf('.')+1);
       var docOptions = angular.extend(
-          {
-            uri: f.name.replace(/\s+/g, '_'),
-            category: 'content'
-          },
-          scope.uploadOptions
-        );
+        {
+          category: 'content'
+        },
+        scope.uploadOptions
+      );
       if (scope.transform) {
         docOptions.transform = scope.transform;
       }
       if (scope.collection) {
         docOptions.collection = scope.collection;
       }
-      var progress = service.sendFile(f, docOptions);
+      var progress = service.sendFile(f, docOptions, scope.onSend, scope.onSendDone, scope.onSendFail);
       progress.ext = ext;
       scope.files.push(progress);
     }
