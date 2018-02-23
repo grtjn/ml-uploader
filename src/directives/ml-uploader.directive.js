@@ -2,7 +2,7 @@
 
   'use strict';
 
-  MLUploadDirective.$injector = ['mlUploadService'];
+  MLUploadDirective.$inject = ['mlUploadService'];
 
   /**
    * angular element directive; an uploader for loading documents into MarkLogic.
@@ -27,73 +27,107 @@
    */
   angular.module('ml.uploader')
     .directive('mlUpload', MLUploadDirective);
-    function isSupported() {
-      return window.File && window.FileList && window.FileReader;
-    }
 
-    function MLUploadDirective(mlUploadService) {
-      return {
-        restrict: 'E',
-        replace: true,
-        transclude: true,
-        scope: {
-          multiple: '@',
-          collection: '@mlCollection',
-          fileList: '=uploadFileList',
-          transform: '=mlTransform',
-          uploadOptions: '=uploadOptions'
-        },
-        link: function(scope, ele, attr, transclude) {
-          scope.files = scope.fileList || [];
-          scope.uploadOptions = scope.uploadOptions || {};
+  function isSupported() {
+    return window.File && window.FileList && window.FileReader;
+  }
 
-          if (!isSupported()) {
-            throw 'ml-uloader - HTML5 file upload not supported by this browser';
-          }
+  function MLUploadDirective(mlUploadService) {
+    return {
+      restrict: 'E',
+      replace: true,
+      transclude: true,
+      scope: {
+        multiple: '@',
+        collection: '@mlCollection',
+        fileList: '=uploadFileList',
+        transform: '=mlTransform',
+        uploadOptions: '=',
+        onSend: '=',
+        onSendDone: '=',
+        onSendFail: '=',
+        doubleClick: '='
+      },
+      link: function(scope, ele, attr, transclude) {
+        scope.files = scope.fileList || [];
+        scope.uploadOptions = scope.uploadOptions || {};
 
-          scope.multiple = scope.multiple && scope.multiple === 'true';
+        if (!isSupported()) {
+          throw 'ml-uloader - HTML5 file upload not supported by this browser';
+        }
 
-          ele = angular.element(ele);
+        scope.multiple = scope.multiple && scope.multiple === 'true';
 
-          ele
-            .append(
-              '<div style="width:0;height:0;overflow:hidden">' +
-              '<input type="file" name="_hidden_uploader_file" ' +
-               (scope.multiple ? 'multiple' : '' ) + 
-               '></div>'
-            );
-          var fileInp = ele.find('input[type="file"]');
-          var dropzone = ele.find('.ml-dropzone');
+        ele = angular.element(ele);
 
-          // clicking the dropzone is like clicking the file input
-          dropzone
-            .on('click', function(evt) {
-              console.log('dz click');
-              fileInp.click();
-              evt.stopPropagation();
-            })
-            .on('drop', function(e) {
-              return mlUploadService.dropFiles(e, dropzone, scope);
-            })
-            .on('dragenter dragleave dragover',
-              function(e) {
-                return mlUploadService.dzHighlight(e, dropzone);
-              });
+        ele
+          .append(
+            '<div style="width:0;height:0;overflow:hidden">' +
+            '<input type="file" name="_hidden_uploader_file" ' +
+             (scope.multiple ? 'multiple' : '' ) +
+             '></div>'
+          );
+        var fileInp = ele.find('input[type="file"]');
+        var dropzone = ele.find('.ml-dropzone');
+        var doubleclick;
 
-          fileInp.on('change', function(e) {
+        scope.open = function() {
+          console.log('button click');
+          fileInp[0].value = '';
+          fileInp[0].click();
+        };
+
+        // clicking the dropzone is like clicking the file input
+        dropzone
+          .on('click', function(evt) {
+            doubleclick = false;
+            window.setTimeout(function() {
+              if (! doubleclick) {
+                console.log('dz click');
+                fileInp[0].value = '';
+                fileInp.click();
+              }
+            }, 300);
+            evt.stopPropagation();
+          })
+          .on('dblclick', function(evt) {
+            doubleclick = true;
+            console.log('dz dblclick');
+            var file = scope.files.filter(function(f) {
+              return f.name === evt.target.title;
+            })[0];
+            if (scope.doubleClick) {
+              scope.doubleClick(file);
+            }
+            evt.stopPropagation();
+          })
+          .on('drop', function(e) {
             return mlUploadService.dropFiles(e, dropzone, scope);
-          });
+          })
+          .on('dragenter dragleave dragover',
+            function(e) {
+              return mlUploadService.dzHighlight(e, dropzone);
+            });
 
-          // prevent it from navigating away from page if an accidental drop
-          jQuery('html').on('drop', function(e) {
-            e.preventDefault();
-            console.log('document drop', e);
-            return false;
-          });
+        fileInp.on('change', function(e) {
+          return mlUploadService.dropFiles(e, dropzone, scope);
+        });
 
-        },
-        template:
-          '<div class="ml-upload">' +
+        // prevent it from navigating away from page if an accidental drop
+        jQuery('html').on('drop', function(e) {
+          e.preventDefault();
+          console.log('document drop', e);
+          return false;
+        });
+
+      },
+      template: function(ele, attr) {
+        if (attr.button === 'true') {
+          return '<div class="ml-upload"><button class="btn btn-default" ng-click="open()">Upload file' +
+          (attr.multiple === 'true' ? '(s)' : '') +
+          '</button></div>';
+        } else {
+          return '<div class="ml-upload">' +
           '<div class="ml-dropzone">' +
           '<div class="notes" ng-transclude ng-hide="files.length">' +
           '</div>' +
@@ -107,7 +141,9 @@
           '<span class="ml-upload-progress-value">{{ f.value }}%</span>' +
           '<span class="ml-upload-progress-bar" ' +
           ' ng-style="{ width: f.value + \'%\' }">&nbsp;</span>' +
-          '</span></li></ul></div></div>'
-      };
-    }
+          '</span></li></ul></div></div>';
+        }
+      }
+    };
+  }
 })();
