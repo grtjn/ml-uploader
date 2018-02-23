@@ -93,8 +93,9 @@
           .on('dblclick', function(evt) {
             doubleclick = true;
             console.log('dz dblclick');
+            var name = evt.target.title || evt.target.textContent;
             var file = scope.files.filter(function(f) {
-              return f.name === evt.target.title;
+              return f.name === name;
             })[0];
             if (scope.doubleClick) {
               scope.doubleClick(file);
