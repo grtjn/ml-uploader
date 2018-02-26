@@ -38,6 +38,7 @@
       replace: true,
       transclude: true,
       scope: {
+        button: '@',
         multiple: '@',
         collection: '@mlCollection',
         fileList: '=uploadFileList',

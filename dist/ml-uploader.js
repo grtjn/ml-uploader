@@ -9,6 +9,7 @@
 
   angular.module('ml.uploader')
     .factory('mlUploadService', MLUploadService);
+
   MLUploadService.$inject = ['$rootScope', 'MLRest', '$http'];
 
   function MLUploadService($rootScope, mlRest, $http) {
@@ -47,7 +48,7 @@
     };
 
 
-    service.sendFile = function(data, opts) {
+    service.sendFile = function(data, opts, onSend, onSendDone, onSendFail) {
       var progress = Object.create(Progress);
       var format = 'binary';
       progress.name = data.name;
@@ -61,7 +62,9 @@
         format = 'json';
       }
 
-      var uri = data.name;
+      // Suppress any invalid char from the uri, by replacing it with _,
+      // makes lives easier than using percent encoding..
+      var uri = data.name.replace(/[^!*'();:@&=+$,/?#\[\]A-Za-z0-9\-_.~%]/g, '_');
       if (opts && opts.uriPrefix) {
         if (angular.isFunction(opts.uriPrefix)) {
           uri = opts.uriPrefix(data) + uri;
@@ -70,18 +73,21 @@
         }
       }
       var params = angular.extend(
-          opts,
-          {
-            uri: uri,
-            format: format
-          }
-        );
+        opts,
+        {
+          uri: uri,
+          format: format
+        }
+      );
       delete params.uriPrefix;
 
+      if (onSend) {
+        onSend(progress);
+      }
       mlRest.request(
         '/documents',
         {
-          data: data, 
+          data: data,
           params: params,
           method: 'PUT',
           headers: {
@@ -90,14 +96,21 @@
         }
       ).then(function(response) {
           console.log('added document to grade');
+          if (onSendDone) {
+            onSendDone(progress);
+          }
           progress.done = true;
           progress.update(100);
-        },
-        angular.noop,
-        function() {
-          console.log(arguments);
+        },function(reason) {
+          console.log('send document failed:' + reason);
+          progress.failed = true;
+          if (onSendFail) {
+            onSendFail(progress);
+          }
         });
 
+      progress.uri = uri;
+      progress.type = data.type;
 
       return progress;
     };
@@ -128,19 +141,18 @@
       console.log('processing file', f);
       var ext = f.name.substr(f.name.lastIndexOf('.')+1);
       var docOptions = angular.extend(
-          {
-            uri: f.name.replace(/\s+/g, '_'),
-            category: 'content'
-          },
-          scope.uploadOptions
-        );
+        {
+          category: 'content'
+        },
+        scope.uploadOptions
+      );
       if (scope.transform) {
         docOptions.transform = scope.transform;
       }
       if (scope.collection) {
         docOptions.collection = scope.collection;
       }
-      var progress = service.sendFile(f, docOptions);
+      var progress = service.sendFile(f, docOptions, scope.onSend, scope.onSendDone, scope.onSendFail);
       progress.ext = ext;
       scope.files.push(progress);
     }
@@ -153,7 +165,7 @@
 
   'use strict';
 
-  MLUploadDirective.$injector = ['mlUploadService'];
+  MLUploadDirective.$inject = ['mlUploadService'];
 
   /**
    * angular element directive; an uploader for loading documents into MarkLogic.
@@ -178,73 +190,109 @@
    */
   angular.module('ml.uploader')
     .directive('mlUpload', MLUploadDirective);
-    function isSupported() {
-      return window.File && window.FileList && window.FileReader;
-    }
 
-    function MLUploadDirective(mlUploadService) {
-      return {
-        restrict: 'E',
-        replace: true,
-        transclude: true,
-        scope: {
-          multiple: '@',
-          collection: '@mlCollection',
-          fileList: '=uploadFileList',
-          transform: '=mlTransform',
-          uploadOptions: '=uploadOptions'
-        },
-        link: function(scope, ele, attr, transclude) {
-          scope.files = scope.fileList || [];
-          scope.uploadOptions = scope.uploadOptions || {};
+  function isSupported() {
+    return window.File && window.FileList && window.FileReader;
+  }
 
-          if (!isSupported()) {
-            throw 'ml-uloader - HTML5 file upload not supported by this browser';
-          }
+  function MLUploadDirective(mlUploadService) {
+    return {
+      restrict: 'E',
+      replace: true,
+      transclude: true,
+      scope: {
+        button: '@',
+        multiple: '@',
+        collection: '@mlCollection',
+        fileList: '=uploadFileList',
+        transform: '=mlTransform',
+        uploadOptions: '=',
+        onSend: '=',
+        onSendDone: '=',
+        onSendFail: '=',
+        doubleClick: '='
+      },
+      link: function(scope, ele, attr, transclude) {
+        scope.files = scope.fileList || [];
+        scope.uploadOptions = scope.uploadOptions || {};
 
-          scope.multiple = scope.multiple && scope.multiple === 'true';
+        if (!isSupported()) {
+          throw 'ml-uloader - HTML5 file upload not supported by this browser';
+        }
 
-          ele = angular.element(ele);
+        scope.multiple = scope.multiple && scope.multiple === 'true';
 
-          ele
-            .append(
-              '<div style="width:0;height:0;overflow:hidden">' +
-              '<input type="file" name="_hidden_uploader_file" ' +
-               (scope.multiple ? 'multiple' : '' ) + 
-               '></div>'
-            );
-          var fileInp = ele.find('input[type="file"]');
-          var dropzone = ele.find('.ml-dropzone');
+        ele = angular.element(ele);
 
-          // clicking the dropzone is like clicking the file input
-          dropzone
-            .on('click', function(evt) {
-              console.log('dz click');
-              fileInp.click();
-              evt.stopPropagation();
-            })
-            .on('drop', function(e) {
-              return mlUploadService.dropFiles(e, dropzone, scope);
-            })
-            .on('dragenter dragleave dragover',
-              function(e) {
-                return mlUploadService.dzHighlight(e, dropzone);
-              });
+        ele
+          .append(
+            '<div style="width:0;height:0;overflow:hidden">' +
+            '<input type="file" name="_hidden_uploader_file" ' +
+             (scope.multiple ? 'multiple' : '' ) +
+             '></div>'
+          );
+        var fileInp = ele.find('input[type="file"]');
+        var dropzone = ele.find('.ml-dropzone');
+        var doubleclick;
 
-          fileInp.on('change', function(e) {
+        scope.open = function() {
+          console.log('button click');
+          fileInp[0].value = '';
+          fileInp[0].click();
+        };
+
+        // clicking the dropzone is like clicking the file input
+        dropzone
+          .on('click', function(evt) {
+            doubleclick = false;
+            window.setTimeout(function() {
+              if (! doubleclick) {
+                console.log('dz click');
+                fileInp[0].value = '';
+                fileInp.click();
+              }
+            }, 300);
+            evt.stopPropagation();
+          })
+          .on('dblclick', function(evt) {
+            doubleclick = true;
+            console.log('dz dblclick');
+            var name = evt.target.title || evt.target.textContent;
+            var file = scope.files.filter(function(f) {
+              return f.name === name;
+            })[0];
+            if (scope.doubleClick) {
+              scope.doubleClick(file);
+            }
+            evt.stopPropagation();
+          })
+          .on('drop', function(e) {
             return mlUploadService.dropFiles(e, dropzone, scope);
-          });
+          })
+          .on('dragenter dragleave dragover',
+            function(e) {
+              return mlUploadService.dzHighlight(e, dropzone);
+            });
 
-          // prevent it from navigating away from page if an accidental drop
-          jQuery('html').on('drop', function(e) {
-            e.preventDefault();
-            console.log('document drop', e);
-            return false;
-          });
+        fileInp.on('change', function(e) {
+          return mlUploadService.dropFiles(e, dropzone, scope);
+        });
 
-        },
-        template:
-          '<div class="ml-upload">' +
+        // prevent it from navigating away from page if an accidental drop
+        jQuery('html').on('drop', function(e) {
+          e.preventDefault();
+          console.log('document drop', e);
+          return false;
+        });
+
+      },
+      template: function(ele, attr) {
+        if (attr.button === 'true') {
+          return '<div class="ml-upload"><button class="btn btn-default" ng-click="open()">Upload file' +
+          (attr.multiple === 'true' ? '(s)' : '') +
+          '</button></div>';
+        } else {
+          return '<div class="ml-upload">' +
           '<div class="ml-dropzone">' +
           '<div class="notes" ng-transclude ng-hide="files.length">' +
           '</div>' +
@@ -258,7 +306,9 @@
           '<span class="ml-upload-progress-value">{{ f.value }}%</span>' +
           '<span class="ml-upload-progress-bar" ' +
           ' ng-style="{ width: f.value + \'%\' }">&nbsp;</span>' +
-          '</span></li></ul></div></div>'
-      };
-    }
+          '</span></li></ul></div></div>';
+        }
+      }
+    };
+  }
 })();

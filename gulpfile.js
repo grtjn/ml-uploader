@@ -6,7 +6,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat'),
 //    html2Js = require('gulp-ng-html2js'),
     jshint = require('gulp-jshint'),
-    karma = require('karma').server,
+    karma = require('karma'),
     less = require('gulp-less'),
 //    minifyHtml = require('gulp-minify-html'),
     path = require('path'),
@@ -19,7 +19,9 @@ var gulp = require('gulp'),
 gulp.task('jshint', function() {
   gulp.src([
       './gulpfile.js',
-      './src/**/*.js'
+      './src/**/*.js',
+      './sample/**/*.js',
+      './test/**/*.js'
     ])
     .pipe(jshint())
     .pipe(jshint.reporter('default'));
@@ -49,7 +51,7 @@ gulp.task('styles', function() {
 });
 
 gulp.task('test', function() {
-  karma.start({
+  var server = new karma.Server({
     configFile: path.join(__dirname, './karma.conf.js'),
     singleRun: true,
     autoWatch: false
@@ -57,16 +59,18 @@ gulp.task('test', function() {
     console.log('Karma has exited with ' + exitCode);
     process.exit(exitCode);
   });
+  server.start();
 });
 
 gulp.task('autotest', function() {
-  karma.start({
+  var server = new karma.Server({
     configFile: path.join(__dirname, './karma.conf.js'),
     autoWatch: true
   }, function (exitCode) {
     console.log('Karma has exited with ' + exitCode);
     process.exit(exitCode);
   });
+  server.start();
 });
 
 gulp.task('docs', function() {

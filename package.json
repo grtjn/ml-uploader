@@ -1,6 +1,6 @@
 {
   "name": "ml-uploader",
-  "version": "0.0.3",
+  "version": "0.0.7",
   "description": "AngularJS library for uploading documents into MarkLogic",
   "devDependencies": {
     "gulp": "^3.9.0",
@@ -18,12 +18,12 @@
     "jquery": "^2.1.4",
     "jsdoc": "^3.3.1",
     "jsdoc-baseline": "git://github.com/hegemonic/jsdoc-baseline.git#887a5a5",
-    "karma": "^0.12.36",
-    "karma-coverage": "^0.4.2",
+    "karma": "^0.13.0",
+    "karma-coverage": "^0.5.0",
     "karma-jasmine": "^0.3.5",
     "karma-ng-json2js-preprocessor": "^1.0.0",
-    "karma-phantomjs-launcher": "^0.2.0",
-    "phantomjs": "^1.9.17",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "phantomjs-prebuilt": "2.1.15",
     "phantomjs-polyfill": "0.0.1"
   },
   "scripts": {
@@ -39,7 +39,7 @@
     "Uploader"
   ],
   "author": "Ryan Dew <ryan.j.dew@gmail.com>",
-  "license": "Apache License 2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/ryanjdew/ml-uploader/issues"
   },

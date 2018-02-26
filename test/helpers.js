@@ -1,6 +1,8 @@
-'use strict';
+/* global beforeEach, jasmine */
 
 beforeEach(function() {
+  'use strict';
+
   jasmine.addMatchers({
     toHaveClass: function(util, customEqualityTesters) {
       return {

@@ -1,6 +1,8 @@
-/* global describe, beforeEach, module, it, expect, inject */
+/* global describe, beforeEach, module, it, inject, jasmine */
 
 describe('MLUploader#mock-service', function () {
+
+  'use strict';
 
   var mockMLRest, $rootScope, $q;
 
@@ -30,5 +32,7 @@ describe('MLUploader#mock-service', function () {
     $rootScope = $injector.get('$rootScope');
 
   }));
+
+  it('should test successfully', function() {});
 
 });
